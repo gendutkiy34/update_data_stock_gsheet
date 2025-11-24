@@ -1,6 +1,10 @@
 # update_data_stock_gsheet
 Serverless AWS Lambda pipeline for automated stock data collection and analysis. Features dynamic stock lists, technical indicators, and Google Sheets integration.
 
+![AWS](https://img.shields.io/badge/AWS-Lambda-orange)
+![Python](https://img.shields.io/badge/Python-3.10-blue)
+![License](https://img.shields.io/badge/License-MIT-green)
+
 ## 📊 Architecture
 
 ```mermaid
@@ -38,30 +42,27 @@ flowchart TD
 
 ## Repository Structure
 ```
-stock-monitoring-pipeline/
-├── lambda_functions/
-│   ├── get_data_yfinance/           # Lambda Function 1
-│   │   ├── src/ 
-│   │   │   ├── __init__.py
-│   │   │   ├── aws.py
-│   │   │   ├── stock.py
-│   │   │   └── utilization.py
-│   │   ├── lambda_function.py
-│   │   ├── getdata.py
-│   │   ├── .env
-│   │   └── requirements.txt
-│   └── Update_Gsheet_stockmonitoring/ # Lambda Function 2
-│       ├── src/ 
-│       │   ├── __init__.py
-│       │   ├── aws.py
-│       │   ├── gdrive.py
-│       │   ├── gsheet.py
-│       │   └── utilization.py
-│       ├── .env
-│       ├── getdata.py
-│       ├── lambda_function.py
-│       └── requirements.txt
-├── layers/                       # AWS Lambda Layer
+update_data_stock_gsheet/
+├── get_data_yfinance/               # Lambda Function 1
+│   ├── src/ 
+│   │   ├── aws.py
+│   │   ├── stock.py
+│   │   └── utilization.py
+│   ├── lambda_function.py
+│   ├── getdata.py
+│   ├── .env
+│   └── requirements.txt
+├── Update_Gsheet_stockmonitoring/   # Lambda Function 2
+│   ├── src/ 
+│   │   ├── aws.py
+│   │   ├── gdrive.py
+│   │   ├── gsheet.py
+│   │   └── utilization.py
+│   ├── lambda_function.py
+│   ├── getdata.py
+│   ├── .env
+│   └── requirements.txt
+├── layers/
 │   └── requirements.txt
 └── README.md
 ```
@@ -240,12 +241,12 @@ json
 
 
 # ❗ Troubleshooting
-| Category | Issue | Solution |
-|----------|-------|----------|
-| **AWS Permissions** | Secret access denied | Check IAM role has `secretsmanager:GetSecretValue` permission |
-| **AWS Resources** | S3 bucket not found | Verify bucket `jkstockdata` exists in `ap-southeast-1` region |
-| **Google API** | Google Sheet not found | Check `SPREADSHEET_ID` and ensure sheet is shared with service account |
-| **External APIs** | Yahoo Finance timeout | Increase Lambda timeout to 3-5 minutes |
-| **Dependencies** | Module import errors | Verify Lambda layer is properly attached to function |
-| **Performance** | Lambda timeout | Reduce number of stocks or increase timeout/memory |
+| Issue | Solution |
+|-------|----------|
+| Secret access denied | Check IAM role has Secrets Manager permissions |
+| S3 bucket not found | Verify bucket exists in correct region |
+| Google Sheet not found | Check SPREADSHEET_ID and sharing permissions |
+| Yahoo Finance timeout | Increase Lambda timeout to 3-5 minutes |
+| Module import errors | Verify Lambda layer is properly attached |
+| Lambda timeout | Reduce number of stocks or increase timeout |
 
