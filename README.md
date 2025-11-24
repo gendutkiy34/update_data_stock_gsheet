@@ -349,3 +349,15 @@ json
 3. CloudWatch: 5-day log retention for cost optimization
 4. CSV Strategy: Replace (not append) for clean data transfer
 
+#  Cost Estimation
+## Monthly Cost Breakdown (Estimated)
+| Service | Usage | Cost | Notes |
+|---------|-------|------|-------|
+| **AWS Lambda** | 2 functions × 30 days × 5 min/day | ~$0.10 - $0.20 | 200MB & 256MB memory, 5 min timeout |
+| **EventBridge Scheduler** | 1 schedule × 20 invocations/month | ~$0.10 | Based on 20 trading days |
+| **AWS Secrets Manager** | 1 secret stored | ~$0.40 | Fixed monthly cost |
+| **S3 Storage** | ~1MB CSV × 30 days + API calls | ~$0.01 - $0.05 | Minimal storage needs |
+| **CloudWatch Logs** | 5 days retention, ~10MB/month | ~$0.02 - $0.05 | Ingest + storage |
+| **Data Transfer** | Minimal inter-service traffic | ~$0.01 | Within same region |
+
+**Total Estimated Monthly Cost: ~$0.65 - $0.85 USD**
