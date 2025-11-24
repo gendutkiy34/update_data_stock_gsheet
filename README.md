@@ -1,5 +1,6 @@
-# update_data_stock_gsheet
-Serverless AWS Lambda pipeline for automated stock data collection and analysis. Features dynamic stock lists, technical indicators, and Google Sheets integration.
+# Stock Monitoring Data Pipeline
+
+A serverless AWS Lambda pipeline that automatically collects Indonesian stock data from Yahoo Finance, calculates technical indicators, and updates Google Sheets daily after market close.
 
 ![AWS](https://img.shields.io/badge/AWS-Lambda-orange)
 ![Python](https://img.shields.io/badge/Python-3.10-blue)
@@ -42,29 +43,32 @@ flowchart TD
 
 ## Repository Structure
 ```
-update_data_stock_gsheet/
-├── get_data_yfinance/               # Lambda Function 1
-│   ├── src/ 
-│   │   ├── aws.py
-│   │   ├── stock.py
-│   │   └── utilization.py
-│   ├── lambda_function.py
-│   ├── getdata.py
-│   ├── .env
-│   └── requirements.txt
-├── Update_Gsheet_stockmonitoring/   # Lambda Function 2
-│   ├── src/ 
-│   │   ├── aws.py
-│   │   ├── gdrive.py
-│   │   ├── gsheet.py
-│   │   └── utilization.py
-│   ├── lambda_function.py
-│   ├── getdata.py
-│   ├── .env
-│   └── requirements.txt
-├── layers/
-│   └── requirements.txt
-└── README.md
+📦 stock-monitoring-pipeline
+├── 📂 lambda_functions
+│   ├── 📂 get_data_yfinance           # 🚀 Lambda Function 1
+│   │   ├── 📂 src 
+│   │   │   ├── 📄 __init__.py
+│   │   │   ├── 📄 aws.py
+│   │   │   ├── 📄 stock.py
+│   │   │   └── 📄 utilization.py
+│   │   ├── 📄 lambda_function.py
+│   │   ├── 📄 getdata.py
+│   │   ├── 🔧 .env
+│   │   └── 📋 requirements.txt
+│   └── 📂 Update_Gsheet_stockmonitoring # 📊 Lambda Function 2
+│       ├── 📂 src 
+│       │   ├── 📄 __init__.py
+│       │   ├── 📄 aws.py
+│       │   ├── 📄 gdrive.py
+│       │   ├── 📄 gsheet.py
+│       │   └── 📄 utilization.py
+│       ├── 🔧 .env
+│       ├── 📄 sheetUpdate.py
+│       ├── 📄 lambda_function.py
+│       └── 📋 requirements.txt
+├── 📂 layers
+│   └── 📋 requirements.txt
+└── 📄 README.md
 ```
 
 ## Function 1: Data Collector (get_data_yfinance)
@@ -84,14 +88,47 @@ update_data_stock_gsheet/
 - getdata.py - Data retrieval and processing
 - .env - Local environment variables (for development)
 
+
+# ⚙️ Setup Instructions
 ## 🛠️ Prerequisites
 - AWS Account with appropriate permissions
 - Google Service Account with Sheets API access
 - Google Sheet created and shared with service account
+- Python 3.10 installed locall
 
+## Step 1: Prepare Dependencies for AWS Lambda Layer
+- Create Requirements File
+- Create layers/requirements.txt:
+```
+yfinance>=0.2.18
+pandas>=1.5.0
+numpy>=1.21.0
+google-auth>=2.17.0
+google-api-python-client>=2.80.0
+```
+### Build Lambda Layer
+1. Create directory structure:
+```
+mkdir -p python/src
+```
+2. Copy shared source code and install dependencies:
+```cp -r src/* python/src/
+pip install -r layers/requirements.txt -t python/
+```
+3. Create layer ZIP:
+```
+zip -r dependencies_layer.zip python/
+```
 
-# ⚙️ Setup Instructions
-## 1. Google Sheets Setup
+## Step 2: Create AWS Lambda Layer via GUI
+1. Open AWS Console → Lambda → Layers
+2. Click Create layer
+3. Layer name: stock-monitoring-dependencies
+4. Upload your dependencies_layer.zip file
+5. Compatible runtimes: Python 3.10
+6. Click Create
+
+## Step 3: Google Sheets Setup
 ### Create Service Account
 1. Go to Google Cloud Console
 2. Click "Select Project" → "New Project" or choose existing
@@ -107,7 +144,7 @@ Create a sheet with the following headers in the first row:
 ```
 Date, Close, High, Low, Open, Volume, RSI(14), EMA12, EMA26, MACD, Signal, Volatilitas(7d)
 ```
-## 2. AWS Secrets Manager Setup
+## Step 4: AWS Secrets Manager Setup
 1. Open AWS Management Console → Secrets Manager
 2. Click Store a new secret
 3. Select Other type of secret
@@ -131,7 +168,7 @@ aws secretsmanager create-secret \
 6. Secret name: google/sheets/credentials
 7. Click Next → Next → Store
 
-## 3. S3 Bucket Setup
+## Step 5: S3 Bucket Setup
 1. Open AWS Management Console → S3
 2. Click Create bucket
 3. Bucket name: ishg-data-pipeline-yourname (must be unique)
@@ -139,7 +176,7 @@ aws secretsmanager create-secret \
 5. Uncheck "Block all public access" (or keep based on your security needs)
 6. Click Create bucket
 
-## 4. IAM Roles Setup
+## Step 6: IAM Roles Setup
 1. Create Lambda Execution Role
 2. Open IAM Console → Roles → Create role
 3. Trusted entity: AWS service
@@ -149,10 +186,10 @@ aws secretsmanager create-secret \
   - AmazonS3FullAccess (or create custom policy for specific buckets)
   - SecretsManagerReadWrite
 6. Click Next
-7. Role name: ishg-lambda-execution-role
+7. Role name: stock-monitoring-lambda-role
 8. Click Create role
 
-## 5. Lambda Function 1: Data Collector
+## Step 7: Lambda Function 1 - Data Collector
 ### Create Function
 1. Open AWS Console → Lambda → Create function
 2. Choose Author from scratch
@@ -161,6 +198,13 @@ aws secretsmanager create-secret \
 5. Architecture: x86_64
 6. Execution role: Use existing role → select ishg-lambda-execution-role
 7. Click Create function
+### Add Layer
+1. In your function, scroll to Layers section
+2. Click Add a layer
+3. Choose Custom layers
+4. Select stock-monitoring-dependencies
+5. Version: 1
+6. Click Add
 ### Configure Function
 1. In Configuration tab → Environment variables → Edit
 2. Add variables:
@@ -170,11 +214,20 @@ aws secretsmanager create-secret \
    - OUTPUTFILE = /tmp/outputfile.csv
    - S3_BUCKET = bucket-name
 6. Click Save
+### Configure Basic Settings
+1. In Configuration → General configuration → Edit
+2. Memory: 200 MB
+3. Timeout: 5 minutes
+4. Click Save
 ### Upload Code
-1. In Code tab, upload your Python code as a .zip file or paste in the editor
-2. Click Deploy
+1. Package your code:
+```
+cd get_data_yfinance
+zip -r function1.zip lambda_function.py getdata.py src/ -x "*.env"
+```
+2. Upload function1.zip via AWS Console
 
-## 6. Lambda Function 2: Sheet Updater
+## Step 8: Lambda Function 2 - Sheet Updater
 ### Create Function
 1. Open AWS Console → Lambda → Create function
 2. Choose Author from scratch
@@ -183,6 +236,13 @@ aws secretsmanager create-secret \
 5. Architecture: x86_64
 6. Execution role: Use existing role → select ishg-lambda-execution-role
 7. Click Create function
+### Add Layer
+1. In your function, scroll to Layers section
+2. Click Add a layer
+3. Choose Custom layers
+4. Select stock-monitoring-dependencies
+5. Version: 1
+6. Click Add
 ### Configure Function
 1. In Configuration tab → Environment variables → Edit
 2. Add variables:
@@ -193,29 +253,61 @@ aws secretsmanager create-secret \
    - S3_BUCKET = bucket-name
    - SHEET_NAME = sheet-name
 6. Click Save
+### Configure Basic Settings
+1. In Configuration → General configuration → Edit
+2. Memory: 256 MB
+3. Timeout: 5 minutes
+4. Click Save
 ### Upload Code
-1. In Code tab, upload your Python code as a .zip file or paste in the editor
-2. Click Deploy
+1. Package your code:
+```
+cd Update_Gsheet_stockmonitoring
+zip -r function1.zip lambda_function.py sheetUpdate.py src/ -x "*.env"
+```
+2. Upload function1.zip via AWS Console
 
-## 7. EventBridge Scheduler Setup
+## Step 9: Add Lambda Invocation Permission
+1. Go to Function 1 → Configuration → Permissions
+2. Click on the execution role name
+3. In IAM console, click Add permissions → Create inline policy
+4. JSON tab, paste:
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": ["lambda:InvokeFunction"],
+            "Resource": "arn:aws:lambda:ap-southeast-1:*:function:Update_Gsheet_stockmonitoring"
+        }
+    ]
+}
+```
+5. Click Review policy → Create policy
+
+## Step 10: EventBridge Scheduler Setup
 1. Open EventBridge Console → Schedules → Create schedule
-2. Schedule name: ishg-daily-update
+2. Schedule name: stock-daily-update
 3. Schedule pattern: Recurring schedule
 4. Schedule type: Rate expression
 5. Rate expression: 1 Day or use Cron expression: 30 20 ? * MON-FRI * (4:30 PM ET)
 6. Click Next
 7. Target type: AWS service
 8. Select target: Lambda function
-9. Function: ishg-data-collector
+9. Function: get_data_yfinance
 10. Click Next → Next → Create schedule
 
+
 # 🔄 Workflow
-1. 4:30 PM ET Daily: EventBridge triggers Lambda Function 1
-2. Data Collection: Function 1 fetches ISHG data from Yahoo Finance
-3. Indicator Calculation: RSI, EMA, MACD, and volatility are calculated
-4. CSV Export: Data is saved as CSV and uploaded to S3
-5. Sheet Update: Lambda Function 2 is triggered, downloads CSV, and updates Google Sheets
-6. Completion: Google Sheet is updated with latest data
+1. Daily Trigger: EventBridge triggers Function 1 at 10 PM WIB
+2. Data Collection: Fetches current stock data from Yahoo Finance
+3. Indicator Calculation: Computes RSI, EMA, MACD, and volatility
+4. CSV Export: Creates/overwrites CSV with today's data only
+5. S3 Upload: Saves CSV to specified bucket
+6. Function Invocation: Function 1 directly calls Function 2
+7. Sheet Update: Function 2 downloads CSV and appends data to Google Sheets
+8. Completion: Data available for analysis
+
 
 # 🧪 Testing
 ## Test Lambda Functions
@@ -230,6 +322,7 @@ json
 }
 ```
 4. Click Test
+
 
 # 📊 Monitoring
 ## View Logs
@@ -249,4 +342,10 @@ json
 | Yahoo Finance timeout | Increase Lambda timeout to 3-5 minutes |
 | Module import errors | Verify Lambda layer is properly attached |
 | Lambda timeout | Reduce number of stocks or increase timeout |
+
+# 🔧 Performance Configuration
+1. Function 1: 200 MB RAM, 5 min timeout (data collection)
+2. Function 2: 256 MB RAM, 5 min timeout (sheets operations)
+3. CloudWatch: 5-day log retention for cost optimization
+4. CSV Strategy: Replace (not append) for clean data transfer
 
