@@ -114,25 +114,6 @@ class Stock():
                         ema12 = raw["EMA12"].values.flatten()
                         ema26 = raw["EMA26"].values.flatten()
 
-                        # Sinyal otomatis
-                        conditions = [
-                            (macd > signal) & (rsi < 70),
-                            (macd < signal) & (rsi > 50)
-                        ]
-                        choices = ["BUY", "SELL"]
-                        raw["Sinyal"] = np.select(conditions, choices, default="HOLD")
-                        # Interpretasi otomatis
-                        interpretasi = []
-                        for i in range(len(raw)):
-                            if macd[i] > signal[i] and rsi[i] < 70 and ema12[i] > ema26[i]:
-                                interpretasi.append("Tren naik kuat (potensi BUY)")
-                            elif macd[i] < signal[i] and rsi[i] > 50:
-                                interpretasi.append("Tren melemah (potensi SELL)")
-                            elif vol[i] > 0.03:
-                                interpretasi.append("Volatilitas tinggi, risiko meningkat")
-                            else:
-                                interpretasi.append("Sideways / wait & see")
-                        raw["Interpretasi"] = interpretasi
                         raw["Emiten"] = emiten.replace(".JK", "")
                         data_result.append(raw)
                     except Exception as e:
